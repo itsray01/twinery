@@ -220,7 +220,7 @@ html, body {
   opacity: 0;
   animation: fadeInUp 0.5s ease 8s forwards; /* appear ~8s */
   pointer-events: auto;      /* allow clicking */
-  font-family: 'Elixia', system-ui, sans-serif;
+  font-family: 'ElixiaUI', system-ui, sans-serif;
 }
 
 /* Slightly higher */
@@ -280,44 +280,80 @@ html, body {
     opacity: 1;
   }
 }
-</style><script role="script" id="twine-user-script" type="text/twine-javascript">/* Fade in each passage and auto-play any videos */
-$(document).on(':passageend', function () {
-  const $p = $('#passage');
+</style><script role="script" id="twine-user-script" type="text/twine-javascript">/* ================================
+   Echoes of Control – Story JS
+   ================================ */
 
-  // Simple fade for passage (background + overlay)
-  $p.hide().fadeIn(400);
+/*
+  START PASSAGE BEHAVIOUR
 
-  // Try to play any videos in the passage
-  $p.find('video').each(function () {
-    try {
-      this.play();
-    } catch (e) {
-      // autoplay might be blocked until user interacts
+  On the Start passage:
+  - First click on the pill (#press-any-key):
+      → starts the intro video with sound
+      → changes the pill text to "Press to continue"
+  - Second click on the pill:
+      → jumps to the "DataHall" passage
+
+  Requirements in the Start passage HTML:
+
+  <div class="bg-video-container">
+    <video id="intro-video" playsinline preload="auto">
+      <source src="https://github.com/itsray01/twinery/releases/download/NewClips/clip01_intro.mp4" type="video/mp4">
+      Your browser does not support the video tag.
+    </video>
+  </div>
+
+  <div class="overlay-wrapper">
+    <div id="subtitle-box">
+      ... your intro text ...
+    </div>
+
+    <div id="choice-box">
+      <div id="press-any-key">Click to begin</div>
+    </div>
+  </div>
+*/
+
+$(document).on('click', '#press-any-key', function () {
+  // Only run this special behaviour on the Start passage
+  if (State.passage !== 'Start') {
+    return;
+  }
+
+  var $pill = $(this);
+  var video = document.getElementById('intro-video');
+  var hasStarted = $pill.data('started') === true;
+
+  if (!hasStarted) {
+    // ----- FIRST CLICK: play intro video with sound -----
+    if (video) {
+      video.muted = false;       // ensure audio is on
+      video.currentTime = 0;     // restart from beginning
+
+      var playPromise = video.play();
+      if (playPromise && playPromise.catch) {
+        playPromise.catch(function (err) {
+          console.warn('Video play was blocked:', err);
+        });
+      }
     }
-  });
-});
 
-/* Start passage: press any key or click to continue to DataHall */
-$(document).on(':passagestart', function (ev) {
-  if (ev.passage.title === 'Start') {
-    $(document).off('keydown.startContinue click.startContinue');
+    // Update pill text and mark as started
+    $pill.text('Press to continue');
+    $pill.data('started', true);
 
-    $(document).on('keydown.startContinue click.startContinue', function () {
-      $(document).off('keydown.startContinue click.startContinue');
-      $('#press-any-key').fadeOut(150, function () {
-        Engine.play('DataHall');
-      });
-    });
   } else {
-    $(document).off('keydown.startContinue click.startContinue');
+    // ----- SECOND CLICK: continue the story -----
+    Engine.play('DataHall');
   }
 });
 </script><tw-passagedata pid="1" name="Start" tags="" position="800,350" size="100,100">&lt;div class=&quot;bg-video-container&quot;&gt;
-  &lt;video autoplay playsinline&gt;
+  &lt;video id=&quot;intro-video&quot; playsinline preload=&quot;auto&quot;&gt;
     &lt;source src=&quot;https://github.com/itsray01/twinery/releases/download/NewClips/clip01_intro.mp4&quot; type=&quot;video/mp4&quot;&gt;
     Your browser does not support the video tag.
   &lt;/video&gt;
 &lt;/div&gt;
+
 
 &lt;div class=&quot;overlay-wrapper&quot;&gt;
 
@@ -328,11 +364,10 @@ $(document).on(':passagestart', function (ev) {
   &lt;/div&gt;
 
   &lt;div id=&quot;choice-box&quot;&gt;
-    &lt;div id=&quot;press-any-key&quot;&gt;Press any key or click to continue&lt;/div&gt;
+    &lt;div id=&quot;press-any-key&quot;&gt;Click to begin&lt;/div&gt;
   &lt;/div&gt;
 
-&lt;/div&gt;
-</tw-passagedata><tw-passagedata pid="2" name="DataHall" tags="" position="800,475" size="100,100">&lt;div class=&quot;bg-video-container&quot;&gt;
+&lt;/div&gt;</tw-passagedata><tw-passagedata pid="2" name="DataHall" tags="" position="800,475" size="100,100">&lt;div class=&quot;bg-video-container&quot;&gt;
   &lt;video autoplay playsinline&gt;
     &lt;source src=&quot;https://github.com/itsray01/twinery/releases/download/NewClips/clip04_problem.mp4&quot; type=&quot;video/mp4&quot;&gt;
     Your browser does not support the video tag.
